@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  app:
+      build: .
+      ports:
+        - "50052:50052"
+      depends_on:
+        - postgres
+      environment:
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_NAME: postgres
+      volumes:
+        - .:/app
+      networks:
+        - mi_red
+      restart: always
+      
+  postgres:
+    image: postgres:latest
+    container_name: mi_postgres_container
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./ini.sql:/docker-entrypoint-initdb.d/ini.sql
+    networks:
+      - mi_red
+    restart: always
+
+volumes:
+  postgres_data:
+
+networks:
+  mi_red:
