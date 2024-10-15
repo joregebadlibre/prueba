@@ -58,3 +58,6 @@ CREATE TABLE IF NOT EXISTS historico (
     valor NUMERIC(18,2),
     saldo NUMERIC(18,2)
 );
+
+
+

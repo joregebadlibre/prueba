@@ -1,21 +1,7 @@
 services:
-  rabbitMQ:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    depends_on:
-      - postgres       
-    environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
-    networks:
-      - local-devsu
-
   postgres:
     image: postgres:latest
-    container_name: mi_postgres_container
+    container_name: postgres_container
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -36,7 +22,9 @@ services:
       dockerfile: Dockerfile
     image: customer:v1
     ports:
-      - "8081:8081"
+      - "8083:8083"
+    depends_on:
+      - postgres
     environment:
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
@@ -45,7 +33,7 @@ services:
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: postgres
-      DB_URL: jdbc:postgresql://localhost:5432/postgres
+      DB_URL: jdbc:postgresql://postgres:5432/postgres
     networks:
       - local-devsu
     volumes:
@@ -60,6 +48,8 @@ services:
     image: customer-products-services:v1
     ports:
       - "8080:8080"
+    depends_on:
+      - postgres
     environment:
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
@@ -68,7 +58,7 @@ services:
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: postgres
-      DB_URL: jdbc:postgresql://localhost:5432/postgres
+      DB_URL: jdbc:postgresql://postgres:5432/postgres
     networks:
       - local-devsu
     volumes:
