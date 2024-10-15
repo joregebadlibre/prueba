@@ -1,73 +1,67 @@
 services:
-  postgres:
-    image: postgres:latest
-    container_name: postgres_container
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./ini.sql:/docker-entrypoint-initdb.d/ini.sql
-    networks:
-      - local-devsu
-    restart: always
 
   customer:
     container_name: customer
+    depends_on:
+      - db
     build:
       context: ./customer
       dockerfile: Dockerfile
     image: customer:v1
     ports:
-      - "8083:8083"
-    depends_on:
-      - postgres
+      - "8081:8081"
     environment:
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: admin
-      SPRING_RABBITMQ_PASSWORD: admin
       DB_USER: postgres
       DB_PASSWORD: postgres
-      DB_NAME: postgres
-      DB_URL: jdbc:postgresql://postgres:5432/postgres
+      DB_NAME: prueba
+      DB_URL: jdbc:postgresql://db:5432/prueba
     networks:
-      - local-devsu
+      - my_network
     volumes:
       - ./log:/log
     restart: always
 
   customer-products-services:
     container_name: customer-products-services
+    depends_on:
+      - db
+      - customer
     build:
       context: ./customer-products-services
       dockerfile: Dockerfile
     image: customer-products-services:v1
     ports:
       - "8080:8080"
-    depends_on:
-      - postgres
     environment:
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: admin
-      SPRING_RABBITMQ_PASSWORD: admin
       DB_USER: postgres
       DB_PASSWORD: postgres
-      DB_NAME: postgres
-      DB_URL: jdbc:postgresql://postgres:5432/postgres
+      DB_NAME: prueba
+      DB_URL: jdbc:postgresql://db:5432/prueba
     networks:
-      - local-devsu
+      - my_network
     volumes:
       - ./log:/log
-    restart: always   
+    restart: always
+
+  db:
+    image: postgres:latest
+    container_name: postgres_container
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: prueba
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./ini.sql:/docker-entrypoint-initdb.d/ini.sql
+    networks:
+      - my_network
+    restart: always
       
 volumes:
   postgres_data:
 
 networks:
-  local-devsu:
+  my_network:
     driver: bridge  
