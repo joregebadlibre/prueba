@@ -1,25 +1,72 @@
 version: '3.8'
 
 services:
-  app:
-      build: .
-      ports:
-        - "50052:50052"
-      depends_on:
-        - postgres
-      environment:
-          DB_USER: postgres
-          DB_PASSWORD: postgres
-          DB_NAME: postgres
-      volumes:
-        - .:/app
-      networks:
-        - mi_red
-      restart: always
+  rabbitMQ:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    depends_on:
+      - postgres       
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    networks:
+      - mi_red
+
+  customer:
+    container_name: customer
+    build:
+      context: ./customer
+      dockerfile: Dockerfile
+    image: customer:v1
+    ports:
+      - "8081:8080"
+    depends_on:
+        - rabbitMQ
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: postgres
+    networks:
+      - mi_red
+    volumes:
+      - ./log:/log
+    restart: always
+
+  customer-products-services:
+    container_name: customer-products-services
+    build:
+      context: ./customer-products-services
+      dockerfile: Dockerfile
+    image: customer-products-services:v1
+    ports:
+      - "8080:8080"
+    depends_on:
+    - rabbitMQ
+    - customer
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: postgres
+    networks:
+      - mi_red
+    volumes:
+      - ./log:/log
+    restart: always   
       
   postgres:
     image: postgres:latest
-    container_name: mi_postgres_container
+    container_name: mi_postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -38,3 +85,4 @@ volumes:
 
 networks:
   mi_red:
+    driver: bridge  
